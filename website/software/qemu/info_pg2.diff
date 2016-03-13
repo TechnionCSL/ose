@@ -1,0 +1,231 @@
+commit 125a4a8ded8fb0c5d9232b0ce279f4e20aa7a73b
+Author: Austin Clements <amdragon@mit.edu>
+Date:   Sun Aug 14 21:45:44 2011 -0400
+
+    monitor: Add an "info pg" command that prints the current page tables
+    
+    The new "info pg" monitor command prints the current page table,
+    including virtual address ranges, flag bits, and snippets of physical
+    page numbers.  Completely filled regions of the page table with
+    compatible flags are "folded", with the result that the complete
+    output for a freshly booted x86-64 Linux VM can fit in a single
+    terminal window.  The output looks like this:
+    
+    VPN range             Entry         Flags            Physical page
+    [7f0000000-7f0000000] PML4[0fe]     ---DA--UWP
+      [7f28c0000-7f28fffff]  PDP[0a3]     ---DA--UWP
+        [7f28c4600-7f28c47ff]  PDE[023]     ---DA--UWP
+          [7f28c4655-7f28c4656]  PTE[055-056] X--D---U-P 0000007f14-0000007f15
+          [7f28c465b-7f28c465b]  PTE[05b]     ----A--U-P 0000001cfc
+    ...
+    [ff8000000-ff8000000] PML4[1ff]     ---DA--UWP
+      [ffff80000-ffffbffff]  PDP[1fe]     ---DA---WP
+        [ffff81000-ffff81dff]  PDE[008-00e] -GSDA---WP 0000001000-0000001dff
+      [ffffc0000-fffffffff]  PDP[1ff]     ---DA--UWP
+        [ffffff400-ffffff5ff]  PDE[1fa]     ---DA--UWP
+          [ffffff5fb-ffffff5fc]  PTE[1fb-1fc] XG-DACT-WP 00000fec00 00000fee00
+        [ffffff600-ffffff7ff]  PDE[1fb]     ---DA--UWP
+          [ffffff600-ffffff600]  PTE[000]     -G-DA--U-P 0000001467
+    
+    Signed-off-by: Austin Clements <amdragon@mit.edu>
+
+diff --git a/monitor.c b/monitor.c
+index ca2f65e..58bcce5 100644
+--- a/monitor.c
++++ b/monitor.c
+@@ -1559,7 +1559,7 @@ static bool ptiter_init(Monitor *mon, PTIter *it)
+         {"PML4", "PDP", "PDE", "PTE"}, 12, 13
+     };
+ #endif
+-    CPUState *env;
++    CPUArchState *env;
+ 
+     env = mon_get_cpu();
+ 
+@@ -2049,6 +2049,172 @@ static void hmp_info_mem(Monitor *mon, const QDict *qdict)
+         mem_info_32(mon, env);
+     }
+ }
++
++/* Return true if the page tree rooted at iter is complete and
++ * compatible with compat.  last will be filled with the last entry at
++ * each level.  If false, does not change iter and last can be filled
++ * with anything; if true, returns with iter at the next entry on the
++ * same level, or the next parent entry if iter is on the last entry
++ * of this level. */
++static bool pg_complete(PTIter *root, const PTIter compat[], PTIter last[])
++{
++    PTIter iter = *root;
++
++    if ((root->ent & 0xfff) != (compat[root->level].ent & 0xfff)) {
++        return false;
++    }
++
++    last[root->level] = *root;
++    ptiter_succ(&iter);
++    if (!root->leaf) {
++        /* Are all of the direct children of root complete? */
++        while (iter.level == root->level + 1) {
++            if (!pg_complete(&iter, compat, last)) {
++                return false;
++            }
++        }
++    }
++    assert(iter.level <= root->level);
++    assert(iter.level == root->level ?
++           iter.i[iter.level] == root->i[iter.level] + 1 : 1);
++    *root = iter;
++    return true;
++}
++
++static char *pg_bits(uint64_t ent)
++{
++    static char buf[32];
++    sprintf(buf, "%c%c%c%c%c%c%c%c%c%c",
++            /* TODO: Some of these change depending on level */
++            ent & PG_NX_MASK ? 'X' : '-',
++            ent & PG_GLOBAL_MASK ? 'G' : '-',
++            ent & PG_PSE_MASK ? 'S' : '-',
++            ent & PG_DIRTY_MASK ? 'D' : '-',
++            ent & PG_ACCESSED_MASK ? 'A' : '-',
++            ent & PG_PCD_MASK ? 'C' : '-',
++            ent & PG_PWT_MASK ? 'T' : '-',
++            ent & PG_USER_MASK ? 'U' : '-',
++            ent & PG_RW_MASK ? 'W' : '-',
++            ent & PG_PRESENT_MASK ? 'P' : '-');
++    return buf;
++}
++
++static void pg_print(Monitor *mon, PTIter *s, PTIter *l)
++{
++    int lev = s->level;
++    char buf[128];
++    char *pos = buf, *end = buf + sizeof(buf);
++
++    /* VFN range */
++    pos += sprintf(pos, "%*s[%0*"PRIx64"-%0*"PRIx64"] ",
++                   lev*2, "",
++                   s->layout->vaw - 3, (uint64_t)s->va >> 12,
++                   s->layout->vaw - 3, ((uint64_t)l->va + l->size - 1) >> 12);
++
++    /* Slot */
++    if (s->i[lev] == l->i[lev]) {
++        pos += sprintf(pos, "%4s[%03x]    ",
++                       s->layout->names[lev], s->i[lev]);
++    } else {
++        pos += sprintf(pos, "%4s[%03x-%03x]",
++                       s->layout->names[lev], s->i[lev], l->i[lev]);
++    }
++
++    /* Flags */
++    pos += sprintf(pos, " %s", pg_bits(s->ent));
++
++    /* Range-compressed PFN's */
++    if (s->leaf) {
++        PTIter iter = *s;
++        int i = 0;
++        bool exhausted = false;
++        while (!exhausted && i++ < 10) {
++            hwaddr pas = iter.pa, pae = iter.pa + iter.size;
++            while (ptiter_succ(&iter) && iter.va <= l->va) {
++                if (iter.level == s->level) {
++                    if (iter.pa == pae) {
++                        pae = iter.pa + iter.size;
++                    } else {
++                        goto print;
++                    }
++                }
++            }
++            exhausted = true;
++
++print:
++            if (pas >> 12 == (pae - 1) >> 12) {
++                pos += snprintf(pos, end-pos, " %0*"PRIx64,
++                                s->layout->paw - 3, (uint64_t)pas >> 12);
++            } else {
++                pos += snprintf(pos, end-pos, " %0*"PRIx64"-%0*"PRIx64,
++                                s->layout->paw - 3, (uint64_t)pas >> 12,
++                                s->layout->paw - 3, (uint64_t)(pae - 1) >> 12);
++            }
++            pos = MIN(pos, end);
++        }
++    }
++
++    /* Trim line to fit screen */
++    if (pos - buf > 79) {
++        strcpy(buf + 77, "..");
++    }
++
++    monitor_printf(mon, "%s\n", buf);
++}
++
++static void pg_info(Monitor *mon, const QDict *qdict)
++{
++    PTIter iter;
++
++    if (!ptiter_init(mon, &iter)) {
++        return;
++    }
++
++    /* Header line */
++    monitor_printf(mon, "%-*s %-13s %-10s %*s%s\n",
++                   3 + 2 * (iter.layout->vaw-3), "VPN range",
++                   "Entry", "Flags",
++                   2*(iter.layout->levels-1), "", "Physical page");
++
++    while (iter.level >= 0) {
++        int i, startLevel, maxLevel;
++        PTIter start[4], last[4], nlast[4];
++        bool compressed = false;
++
++        /* Skip to the next present entry */
++        do { } while (!iter.present && ptiter_succ(&iter));
++        if (iter.level < 0) {
++            break;
++        }
++
++        /* Find a run of complete entries starting at iter and staying
++         * on the same level. */
++        startLevel = iter.level;
++        memset(start, 0, sizeof(start));
++        do {
++            start[iter.level] = iter;
++        } while (!iter.leaf && ptiter_succ(&iter));
++        maxLevel = iter.level;
++        iter = start[startLevel];
++        while (iter.level == startLevel && pg_complete(&iter, start, nlast)) {
++            compressed = true;
++            memcpy(last, nlast, sizeof(last));
++        }
++
++        if (compressed) {
++            /* We found a run we can show as a range spanning
++             * [startLevel, maxLevel].  start stores the first entry
++             * at each level and last stores the last entry. */
++            for (i = startLevel; i <= maxLevel; i++) {
++                pg_print(mon, &start[i], &last[i]);
++            }
++        } else {
++            /* No luck finding a range.  Iter hasn't moved. */
++            pg_print(mon, &iter, &iter);
++            ptiter_succ(&iter);
++        }
++    }
++}
+ #endif
+ 
+ #if defined(TARGET_SH4)
+@@ -2860,6 +3026,13 @@ static mon_cmd_t info_cmds[] = {
+         .help       = "show the active virtual memory mappings",
+         .mhandler.cmd = hmp_info_mem,
+     },
++    {
++        .name       = "pg",
++        .args_type  = "",
++        .params     = "",
++        .help       = "show the page table",
++        .mhandler.cmd = pg_info,
++    },
+ #endif
+     {
+         .name       = "mtree",

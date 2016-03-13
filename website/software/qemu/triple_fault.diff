@@ -1,0 +1,93 @@
+commit 3e7a108ba528a753387b6a1e7df1b72ab4978adb
+Author: Austin Clements <amdragon@mit.edu>
+Date:   Wed Aug 10 17:15:01 2011 -0400
+
+    On triple fault, dump state and halt for inspection instead of resetting.
+    
+    [geofft@ldpreload.com: Rebase on top of 1.7.0]
+    Signed-off-by: Geoffrey Thomas <geofft@ldpreload.com>
+
+diff --git a/cpus.c b/cpus.c
+index e6dcae3..389b123 100644
+--- a/cpus.c
++++ b/cpus.c
+@@ -1385,6 +1385,17 @@ static void tcg_exec_all(void)
+ 
+         if (cpu_can_run(cpu)) {
+             r = tcg_cpu_exec(env);
++            if (r == EXCP_TRIPLE) {
++                cpu_dump_state(cpu, stderr, fprintf, 0);
++                fprintf(stderr, "Triple fault.  Halting for inspection via"
++                        " QEMU monitor.\n");
++                if (gdbserver_running())
++                    r = EXCP_DEBUG;
++                else {
++                    vm_stop(RUN_STATE_DEBUG);
++                    break;
++                }
++            }
+             if (r == EXCP_DEBUG) {
+                 cpu_handle_guest_debug(cpu);
+                 break;
+diff --git a/gdbstub.c b/gdbstub.c
+index 8abcb8a..7b219d5 100644
+--- a/gdbstub.c
++++ b/gdbstub.c
+@@ -1756,3 +1756,8 @@ int gdbserver_start(const char *device)
+     return 0;
+ }
+ #endif
++
++int gdbserver_running(void)
++{
++    return gdbserver_state != NULL;
++}
+diff --git a/include/exec/cpu-defs.h b/include/exec/cpu-defs.h
+index 0ca6f0b..28da0f6 100644
+--- a/include/exec/cpu-defs.h
++++ b/include/exec/cpu-defs.h
+@@ -59,6 +59,7 @@ typedef uint64_t target_ulong;
+ #define EXCP_DEBUG      0x10002 /* cpu stopped after a breakpoint or singlestep */
+ #define EXCP_HALTED     0x10003 /* cpu is halted (waiting for external event) */
+ #define EXCP_YIELD      0x10004 /* cpu wants to yield timeslice to another */
++#define EXCP_TRIPLE     0x10005 /* cpu encountered triple fault */
+ 
+ /* Only the bottom TB_JMP_PAGE_BITS of the jump cache hash bits vary for
+    addresses on the same page.  The top bits are the same.  This allows
+diff --git a/include/exec/gdbstub.h b/include/exec/gdbstub.h
+index c633248..a170a77 100644
+--- a/include/exec/gdbstub.h
++++ b/include/exec/gdbstub.h
+@@ -24,6 +24,7 @@ int gdb_handlesig(CPUState *, int);
+ void gdb_signalled(CPUArchState *, int);
+ void gdbserver_fork(CPUArchState *);
+ #endif
++int gdbserver_running(void);
+ /* Get or set a register.  Returns the size of the register.  */
+ typedef int (*gdb_reg_cb)(CPUArchState *env, uint8_t *buf, int reg);
+ void gdb_register_coprocessor(CPUState *cpu,
+diff --git a/target-i386/excp_helper.c b/target-i386/excp_helper.c
+index 99fca84..3de9818 100644
+--- a/target-i386/excp_helper.c
++++ b/target-i386/excp_helper.c
+@@ -64,8 +64,20 @@ static int check_exception(CPUX86State *env, int intno, int *error_code)
+ 
+         qemu_log_mask(CPU_LOG_RESET, "Triple fault\n");
+ 
++#if 0
+         qemu_system_reset_request();
+         return EXCP_HLT;
++#else
++        /*
++         * QEMU traditionally resets the machine on triple fault
++         * because programs written for 286 protected mode would exit
++         * protected mode by intentionally triple faulting the machine
++         * (after setting the boot vector to point to their code).
++         * This sucks for debugging programs that were written after
++         * 1985, so we instead halt the machine for inspection.
++         */
++        return EXCP_TRIPLE;
++#endif
+     }
+ #endif
+ 
