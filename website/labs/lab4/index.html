@@ -24,12 +24,12 @@ span.c1 {font-weight: bold; text-decoration: underline}
   <dl class="publication">
     <dt>Due date:</dt>
 
-    <dd><strong>Thursday, May 14 2015 23:55</strong></dd>
+    <dd><strong>Tuesday, May 10 2016 23:55</strong></dd>
 
     <dt>TA in charge:</dt>
 
     <dd>Igor Smolyar <a href=
-    "mailto:igors@cs.technion.ac.il?subject=OSE%202015,%20lab4">&lt;igors@cs.technion.ac.il&gt;</a></dd>
+    "mailto:igors@cs.technion.ac.il?subject=OSE%202016,%20lab4">&lt;igors@cs.technion.ac.il&gt;</a></dd>
   </dl>
 
   <p><span class="c1">Please note</span>: You should <b>not</b>
@@ -39,10 +39,10 @@ span.c1 {font-weight: bold; text-decoration: underline}
   <h2>Lab Q&amp;A</h2>
 
   <p>We encourage you to ask questions on course's <a href=
-  "https://piazza.com/technion.ac.il/spring2015/236376">Piazza
+  "https://piazza.com/technion.ac.il/spring2016/236376">Piazza
   Q&amp;A forum</a>. If no help provided on Piazza forum then try to
   email TA in charge. E-mails regarding this lab (such as
-  administrative issues) should be sent with the subject "OSE 2015,
+  administrative issues) should be sent with the subject "OSE 2016,
   lab4".</p>
 
   <h2>Introduction</h2>
@@ -530,10 +530,15 @@ SMP: CPU 3 starting
     Don't forget to modify <code>syscall()</code> to dispatch
     <code>sys_yield()</code>.</p>
 
+    <p>Make sure to invoke <code>sched_yield()</code> in
+    <code>mp_main</code>.
+
     <p>Modify <tt>kern/init.c</tt> to create three (or more!)
-    environments that all run the program <tt>user/yield.c</tt>. You
-    should see the environments switch back and forth between each
-    other five times before terminating, like this:</p>
+    environments that all run the program <tt>user/yield.c</tt>.</p> 
+    <p>Run <kbd>make qemu</kbd>. You should see the environments 
+    switch back and forth between each other five times before 
+    terminating, like below:</p>
+    <p>Test also with several CPUS: <kbd>make qemu CPUS=2</kbd>.</p>
     <pre>
 ...
 Hello, I am environment 00001000.
@@ -552,6 +557,13 @@ Back in environment 00001002, iteration 1.
     runnable environment in the system, the scheduler should invoke
     the JOS kernel monitor. If any of this does not happen, then fix
     your code before proceeding.</p>
+    
+    <p>If you use <kbd>CPUS=1</kbd> at this point, all environments 
+    should successfully run. Setting CPUS larger than 1 at this time 
+    may result in a general protection or kernel page fault once there 
+    are no more	runnable environments due to unhandled timer interrupts 
+    (which we will fix below!).</p> 
+
   </div>
 
   <div class="question">
@@ -1068,10 +1080,20 @@ this string was faulted in at cafebffe
 
     <li><code>pgfault()</code> allocates a new page mapped at a
     temporary location and copies the contents of the faulting page
-    contents into it. Then the fault handler maps the new page at the
+    into it. Then the fault handler maps the new page at the
     appropriate address with read/write permissions, in place of the
     old read-only mapping.</li>
   </ol>
+
+  <p>The user-level <tt>lib/fork.c</tt> code must consult the 
+  environment's page tables for several of the operations above 
+  (e.g., that the PTE for a page is marked <code>PTE_COW</code>).
+  The kernel maps the environment's page tables at <code>UVPT</code> 
+  exactly for this purpose.  It uses a 
+  <a href="uvpt.html">clever mapping trick</a> to make it easy to 
+  lookup PTEs for user code. <tt>lib/entry.S</tt> sets up <code>uvpt</code>
+  and <code>uvpd</code> so that you can easily lookup page-table information 
+  in <tt>lib/fork.c</tt>.</p>
 
   <div class="required">
     <p><span class="header">Exercise 12.</span> Implement
@@ -1398,8 +1420,10 @@ Hint: use the <kbd>vb</kbd> command mentioned earlier.</li>
     <code>ipc_send</code> functions in <tt>lib/ipc.c</tt>.</p>
 
     <p>Use the <tt>user/pingpong</tt> and <tt>user/primes</tt>
-    functions to test your IPC mechanism. You might find it
-    interesting to read <tt>user/primes.c</tt> to see all the forking
+    functions to test your IPC mechanism. <tt>user/primes</tt>
+    will generate for each prime number a new environment until
+    JOS runs out of environments. You might find it interesting 
+    to read <tt>user/primes.c</tt> to see all the forking
     and IPC going on behind the scenes.</p>
   </div><!--
 <div class="challenge">
@@ -1444,7 +1468,9 @@ Hint: use the <kbd>vb</kbd> command mentioned earlier.</li>
   <div class="challenge">
     <p><span class="header">Challenge!</span> Make JOS's IPC
     mechanism more efficient by applying some of the techniques from
-    Liedtke's paper, "Improving IPC by Kernel Design", or any other
+    Liedtke's paper,
+    <a href="http://dl.acm.org/citation.cfm?id=168633">
+    Improving IPC by Kernel Design</a>, or any other
     tricks you may think of. Feel free to modify the kernel's system
     call API for this purpose, as long as your code is backwards
     compatible with what our grading scripts expect.</p>
