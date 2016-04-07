@@ -122,7 +122,7 @@ Switched to a new branch 'lab2'
   two things: it first creates a local branch <tt>lab2</tt> that is
   based on the <tt>origin/lab2</tt> branch provided by the course
   staff, and second, it changes the contents of your <tt>lab</tt>
-  directory to reflect the files stored on the <tt>lab2</tt> branch.e
+  directory to reflect the files stored on the <tt>lab2</tt> branch.
   Git allows switching between existing branches using <kbd>git
   checkout <i>branch-name</i></kbd>, though you should commit any
   outstanding changes on one branch before switching to a different
@@ -604,7 +604,21 @@ Software             |              |--------&gt;|           |----------&gt;  RA
     <ul>
       <li>What entries (rows) in the page directory have been filled
       in at this point? What addresses do they map and where do they
-      point?</li>
+      point? In other words, fill out this table as much as possible:
+      <table border="1">
+      <tbody><tr><td align="center">Entry</td>
+         <td align="center">Base Virtual Address</td>
+         <td align="center">Points to (logically):</td></tr>
+      <tr><td>1023</td><td>?</td><td>Page table for top 4MB of phys
+         memory</td></tr>
+      <tr><td>1022</td><td>?</td><td>?</td></tr>
+      <tr><td align="center">.</td><td>?</td><td>?</td></tr>
+      <tr><td align="center">.</td><td>?</td><td>?</td></tr>
+      <tr><td align="center">.</td><td>?</td><td>?</td></tr>
+      <tr><td>2</td><td>0x00800000</td><td>?</td></tr>
+      <tr><td>1</td><td>0x00400000</td><td>?</td></tr>
+      <tr><td>0</td><td>0x00000000</td><td>[see next question]</td></tr>
+      </tbody></table> </li>
 
       <li>We have placed the kernel and user environment in the same
       address space. Why will user programs not be able to read or
@@ -617,6 +631,14 @@ Software             |              |--------&gt;|           |----------&gt;  RA
       <li>How much space overhead is there for managing memory, if we
       actually had the maximum amount of physical memory? How is this
       overhead broken down?</li>
+
+      <li> Revisit the page table setup in <tt>kern/entry.S</tt> and
+      <tt>kern/entrypgdir.c</tt>.  Immediately after we turn on paging, 
+      EIP is still a low number (a little over 1MB).  At what point do 
+      we transition to running at an EIP above KERNBASE?  What makes it
+      possible for us to continue executing at a low EIP between when we
+      enable paging and when we begin running at an EIP above KERNBASE?
+      Why is this transition necessary?</li>
     </ul>
   </div>
 
