@@ -12,6 +12,14 @@
 === answer in a single line, you can start a new line at will.
 === However, when asked to fill "a table" make each table raw a single line.
 
+=== Q How much disk space can be addressed by a single bitmap block
+===   when size of a block is 4Kb? (number in _bytes_)
+
+=== Q How much disk space can be addressed by a single bitmap block
+===   when size of a block is 512B? (number in _bytes_)
+
+=== Q What is a maximum supported file size in JOS FS? (number in _bytes_)
+
 === Q Did you have to do anything else to ensure that the I/O
 ===   privilege setting is saved and restored properly when you
 ===   subsequently switch from one environment to another? Why? 
@@ -19,12 +27,6 @@
 
 === Q How long approximately did it take you to do this lab?
 ===   (number of hours for all partners combined)
-
-=== Q We simplified the file system this year with the goal of making
-===   more time for the final project. Do you feel like you gained a
-===   basic understanding of the file I/O in JOS? Feel free to suggest
-===   things we could improve. 
-===   (free form)
 
 ====================================================================
 === Q What challenge(s) have you chosen to implement? (specify
