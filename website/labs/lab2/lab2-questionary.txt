@@ -105,5 +105,5 @@
 ===   files which you have changed/added during implementation.
 ===   (one file per line, relative to lab directory containing .git/)
 
-=== Q Describe you solution.
+=== Q Describe your solution.
 ===   (free form, up to 500 words, don't need to use all 500!)
