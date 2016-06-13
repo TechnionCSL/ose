@@ -1141,7 +1141,10 @@ e1000: unicast match[0]: 52:54:00:12:34:56
     from the EEPROM, add a system call to pass the MAC address to
     lwIP, and modify lwIP to the MAC address read from the card. Test
     your change by configuring QEMU to use a different MAC
-    address.</p>
+    address: add <kbd> -net user -net 
+	    nic,macaddr=00:11:22:33:44:00,model=e1000</kbd> to 
+    the QEMUOPTS in JOS's GNUmakefile.
+    </p>
   </div>
 
   <div class="challenge">
