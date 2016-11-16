@@ -13,7 +13,7 @@
 === However, when asked to fill "a table" make each table raw a single line.
 
 === Q How much disk space can be addressed by a single bitmap block
-===   when size of a block is 4Kb? (number in _bytes_)
+===   when size of a block is 4KB? (number in _bytes_)
 
 === Q How much disk space can be addressed by a single bitmap block
 ===   when size of a block is 512B? (number in _bytes_)
