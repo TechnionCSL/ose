@@ -495,6 +495,7 @@ $ <kbd>make</kbd>
   in memory and our page fault handler will read them from disk as
   necessary.
 
+  <div class="challenge">
   <p><span class="header">Challenge!</span> The block cache has no
   eviction policy. Once a block gets faulted in to it, it never gets
   removed and will remain in memory forevermore. Add eviction to the
@@ -502,7 +503,7 @@ $ <kbd>make</kbd>
   page tables, which the hardware sets on any access to a page, you
   can track approximate usage of disk blocks without the need to
   modify every place in the code that accesses the disk map region.
-  Be careful with dirty blocks.</p>
+  Be careful with dirty blocks.</p></div>
 
   <h2 id="The-Block-Bitmap">The Block Bitmap</h2>After
   <code>fs_init</code> sets the <code>bitmap</code> pointer, we can
