@@ -1056,9 +1056,19 @@ reading from file qemu.pcap, link-type EN10MB (Ethernet)
     being empty.</p>
     <!-- XXX Check this for the E1000 and the LAPIC -->
 
-    <p>In this exercise you should use interrupts to detect when packets are
-    received, you'll need to write code to handle these interrupts.
-    Note that, once an interrupt is
+    <p>In this exercise you should use interrupts to detect when packets 
+    are received, you'll need to write code to handle these interrupts.
+    </p>
+    
+    <p>If the transmit queue is full or the receive queue is empty, the 
+    environment and your driver may spend a significant amount of CPU 
+    cycles polling, waiting for a descriptor. The E1000 can generate 
+    an interrupt once it is finished with a transmit or receive descriptor, 
+    avoiding the need for polling. Modify your driver so that processing 
+    the both the transmit and receive queues is interrupt driven 
+    instead of polling. </p>
+
+    <p>Note that, once an interrupt is
     asserted, it will remain asserted until the driver clears the
     interrupt. In your interrupt handler make sure to clear the
     interrupt handled as soon as you handle it. If you don't, after
