@@ -93,8 +93,10 @@ span.c1 {font-weight: bold; text-decoration: underline}
   Ubuntu, open terminal and run (hereinafter <tt>$</tt> denotes a
   shell prompt):
   <pre>
-$ <kbd>sudo apt-get -y install qemu gitk git-gui build-essential gcc-multilib</kbd>
+$ <kbd>sudo apt-get update</kbd>
 [sudo] password for user: <kbd><em>&lt;enter your user password (not echoed to the terminal)&gt;</em></kbd>
+&lt;lots of lines here&gt;
+$ <kbd>sudo apt-get -y install qemu gitk git-gui build-essential gcc-multilib</kbd>
 &lt;lots of lines here&gt;
 $ <kbd>sudo ln -s /usr/bin/qemu-system-i386 /usr/bin/qemu</kbd>
 $ <kbd>echo "set auto-load safe-path /" &gt;&gt; ~/.gdbinit</kbd>
