@@ -43,7 +43,7 @@
 ===   dereferenced both before and after the addressing switch?
 ===   (one sentence, free form)
 
-=== Q In Ex. 4, what happens if the user environment runs out of
+=== Q In Ex. 9, what happens if the user environment runs out of
 ===   space on the exception stack?
 ===   (one setence, free form)
 
