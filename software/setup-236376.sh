@@ -14,7 +14,7 @@ if [[ $(id -u) != 0 ]]; then
 	exit 1
 fi
 
-echo 'deb http://www.cs.technion.ac.il/~cs236376/software/ ./' > /etc/apt/sources.list.d/cs236376.list
+echo 'deb http://technion-csl.github.io/ose/software/ ./' > /etc/apt/sources.list.d/cs236376.list
 apt-get update
 apt-get -y --allow-unauthenticated install qemu gitk git-gui build-essential
 

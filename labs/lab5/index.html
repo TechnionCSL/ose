@@ -478,7 +478,7 @@ $ <kbd>make</kbd>
     <code>PTE_D</code> "dirty" bit is set in the <code>uvpt</code>
     entry. (The <code>PTE_D</code> bit is set by the processor in
     response to a write to that page; see 5.2.4.3 in <a href=
-    "http://www.cs.technion.ac.il/~cs236376/readings/i386/s05_02.htm">
+    "http://technion-csl.github.io/ose/readings/i386/s05_02.htm">
     chapter5</a> of the 386 reference manual.) After writing the
     block to disk, <code>flush_block</code> should clear the
     <code>PTE_D</code> bit using <code>sys_page_map</code>.</p>

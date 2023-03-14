@@ -477,22 +477,22 @@ for a description of the register dump that follows.
   $ <kbd>cd src</kbd>
   $ <kbd>mkdir qemu</kbd>
   $ <kbd>cd qemu</kbd>
-  $ <kbd>wget http://www.cs.technion.ac.il/~cs236376/software/qemu/qemu-2.3.0.tar.bz2</kbd>
+  $ <kbd>wget http://technion-csl.github.io/ose/software/qemu/qemu-2.3.0.tar.bz2</kbd>
   $ <kbd>tar -jxvf qemu-2.3.0.tar.bz2</kbd>
   $ <kbd>cd qemu-2.3.0</kbd>
   
   Now download and apply "info pg" command patches on qemu sources:
-  $ <kbd>wget http://www.cs.technion.ac.il/~cs236376/software/qemu/info_pg1.diff</kbd>
-  $ <kbd>wget http://www.cs.technion.ac.il/~cs236376/software/qemu/info_pg2.diff</kbd>
+  $ <kbd>wget http://technion-csl.github.io/ose/software/qemu/info_pg1.diff</kbd>
+  $ <kbd>wget http://technion-csl.github.io/ose/software/qemu/info_pg2.diff</kbd>
   $ <kbd>patch -p1 &lt; info_pg1.diff</kbd>
   $ <kbd>patch -p1 &lt; info_pg2.diff</kbd>
 
   Apply following patch to dump state and halt for inspection instead of resetting on triple fault:
-  $ <kbd>wget http://www.cs.technion.ac.il/~cs236376/software/qemu/triple_fault.diff</kbd>
+  $ <kbd>wget http://technion-csl.github.io/ose/software/qemu/triple_fault.diff</kbd>
   $ <kbd>patch -p1 &lt; triple_fault.diff</kbd>
 
   Apply following patch to generate E1000 debug messages (useful for lab6):
-  $ <kbd>wget http://www.cs.technion.ac.il/~cs236376/software/qemu/e1000_debug.diff</kbd>
+  $ <kbd>wget http://technion-csl.github.io/ose/software/qemu/e1000_debug.diff</kbd>
   $ <kbd>patch -p1 &lt; e1000_debug.diff</kbd>
 
   Create "bin" directory in your home directory, compile and install qemu:
