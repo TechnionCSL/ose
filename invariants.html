@@ -1,0 +1,51 @@
+
+<html>
+<head>
+<title>OS Invariants</title>
+<link rel="stylesheet" href="labs/labs.css" type="text/css">
+</head>
+<body>
+
+<div class="old"></div>
+
+<h1>OS Invariants</h1>
+
+Operating system code must obey many rules for correctness and
+performance (e.g. check user pointers before using them in kernel
+mode). These rules aren't normally checked by compilers like
+<tt>gcc</tt>.
+
+<p>
+Think about your JOS implementation. What are some unstated invariants
+in the JOS kernel?
+</p>
+
+<p>
+Here are some simple invariants that should generally be true across
+all our implementations:
+</p>
+
+<div class="challenge">
+<ul>
+<li>Interrupts are disabled in kernel mode.</li>
+
+<li>All registers are saved and restored on a context switch.</li>
+
+<li>Application code is never executed with CPL 0.</li>
+
+<li>Never write to a page on the free page list.</li>
+
+<li>If a page is on the free list, it is not mapped in any environment's address space below <tt>KERNBASE</tt>.</li>
+
+<li><tt>UENVS</tt>, <tt>UPAGES</tt> and
+<tt>UVPT</tt> are never mapped writable in any address space.</li>
+
+<li>There is only one <tt>GDT</tt> and only one <tt>TSS</tt>.</li>
+</ul>
+</div>
+
+There are a large number of other invariants and rules that you could
+probably state about your specific JOS implementation.
+
+</body>
+</html>

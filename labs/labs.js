@@ -46,6 +46,7 @@ window.onload = function() {
             sectionAddLink(refs, references[i][0], references[i][1]);
     }
     sectionAddLink(refs, "Lab tools guide", "../../labguide.html");
+    sectionAddLink(refs, "OS Invariants", "../../invariants.html");
     sectionAddLink(refs, "80386 manual", "../../readings/i386/toc.htm");
     sectionAddLink(refs, "IA32");
     sectionAddLink(refs, "Basic architecture", "../../readings/ia32/IA32-1.pdf", "1em");
